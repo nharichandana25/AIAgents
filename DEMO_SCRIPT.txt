@@ -1,0 +1,149 @@
+﻿FINANCE NAVIGATOR — DEMO SCRIPT
+Spoken narration · ~3.5 minutes · First person, conversational
+================================================================================
+
+[0:00 — HOOK]
+
+Most of us have no idea how much money we're wasting on subscriptions we forgot
+about. Netflix, gym memberships, Adobe — they quietly drain your bank account
+every month while you sleep. And when it comes to actually saving money? Most
+people never even start because they don't know where to begin.
+
+Finance Navigator changes that.
+
+[0:20 — WHAT IT IS]
+
+Finance Navigator is an AI concierge agent I built on Google ADK 2.0, in the
+Concierge Agents track. It's a multi-agent system that tracks your subscriptions,
+projects your savings growth, and handles actions like cancellations — but it
+never makes a move without your approval first.
+
+(pause)
+
+It combines multi-agent reasoning, a local MCP server for financial calculations,
+a security checkpoint that guards your data, and a human-in-the-loop approval
+gate — all wired together as a single ADK Workflow graph.
+
+[0:40 — SHOW THE BANNER]
+
+(show assets/cover_page_banner.png)
+
+This is Finance Navigator — Automated, Secure, and Intelligent. Three things your
+bank app definitely is not.
+
+(pause)
+
+[1:00 — ARCHITECTURE]
+
+(show assets/architecture_diagram.png)
+
+Here is the full agent workflow. Let me walk you through it.
+
+Every message the user sends goes first through the security_checkpoint node —
+shown here in orange. This is a FunctionNode that scrubs PII like credit card
+numbers, emails, and SSNs before any data reaches a language model. It also
+detects prompt injection attempts and blocks anything suspicious, routing those
+requests to the security_failure node on the right. Every single decision is
+written out as a structured JSON audit log with a severity level.
+
+Clean messages pass through to the orchestrator — a central LlmAgent that
+understands the user's intent and delegates via AgentTool to one of two
+specialist agents.
+
+The subscription_tracker agent handles everything about subscriptions: listing
+them, calculating monthly costs, flagging unused services. It calls the MCP
+server — shown on the right — to pull live subscription catalog data and run
+unused-service checks.
+
+The savings_planner agent handles budgeting and goals. It calls the MCP server
+to run compound interest projections over any time period with any interest rate.
+
+After the orchestrator gets back the specialist's response, it passes control to
+the hitl_approval_gate — that blue "Human ✋" node. This is where the workflow
+pauses and asks the user for explicit approval before any state-changing action
+happens. Cancelling a subscription? You have to say yes first.
+
+Finally, everything flows into execution_or_final_response, which formats and
+renders the final output in the playground UI.
+
+(pause)
+
+[2:00 — LIVE DEMO]
+
+(switch to playground at http://localhost:18081)
+
+Let me show you three real queries.
+
+First — subscription lookup. I'll type:
+
+  "What subscriptions am I paying for and how much do they cost per month?"
+
+(pause — send message, wait for response)
+
+The orchestrator routes this to subscription_tracker, which calls the MCP
+get_subscription_catalog tool, cross-references with the user profile, and
+returns a clean itemised list: Netflix $15.99, Spotify Family $16.99, Gym
+$49.99, Adobe Creative Cloud $54.99 — totalling over $137 a month. And it flags
+that Netflix hasn't been used in three months.
+
+(pause)
+
+Second — savings projection. I'll type:
+
+  "If I save $300 per month at 4.5% interest, how much will I have in 12 months?"
+
+(pause — send message, wait for response)
+
+The savings_planner calls the MCP calculate_savings_projection tool, runs the
+compound interest calculation, and reports back exactly: projected final balance,
+total deposited, and interest earned. No spreadsheet needed.
+
+(pause)
+
+Third — this is the important one. I'll type:
+
+  "Cancel my Netflix subscription"
+
+(pause — send message, wait for approval prompt)
+
+Watch what happens. The orchestrator detects this is a state-changing action,
+sets action_required to True, and the hitl_approval_gate pauses the entire
+workflow. The user sees: "Do you want to proceed with: Cancel Netflix
+subscription? Reply yes or no."
+
+(type "yes" and send)
+
+After approval, the workflow resumes. Action approved and executed. No
+cancellation happens without the human saying yes. That's the whole point.
+
+(pause)
+
+[3:00 — SECURITY AND MCP]
+
+The security checkpoint runs on every single message — not just suspicious ones.
+It scrubs credit card numbers, emails, social security numbers, and account
+numbers. It detects eight categories of prompt injection. It enforces a
+$5,000 single-transaction limit to block social engineering. And every check
+produces a JSON audit log entry.
+
+The MCP server exposes three tools over stdio transport: get_subscription_catalog,
+calculate_savings_projection, and check_unused_subscriptions. Both sub-agents
+connect to it independently, so each one can call the tools it needs without
+going through the orchestrator.
+
+(pause)
+
+[3:30 — IMPACT AND CLOSE]
+
+Finance Navigator is for anyone who wants to take back control of their money —
+without needing to be a financial expert. It surfaces hidden waste, projects
+growth, enforces privacy, and keeps humans in the loop for anything that matters.
+
+It shows that Google ADK 2.0 is ready for production-grade personal AI tooling —
+where security, multi-agent reasoning, and human oversight work together, not
+against each other.
+
+That is Finance Navigator. Thank you.
+
+================================================================================
+END OF DEMO SCRIPT
